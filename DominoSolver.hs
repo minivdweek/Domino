@@ -7,20 +7,18 @@ printSolutionsTo :: [Integer] -> IO ()
 printSolutionsTo [] = return ()
 printSolutionsTo a = do
    let input = map fromIntegral a
-   putStrLn "Het origineel:"
-   putStrLn "------------------"
+   putStrLn "The Original:"
+   putStrLn " =========================="
    printLines input
-   putStrLn "------------------"
-   putStrLn "" 
-   let bord = zip n input
+   putStrLn " ==========================\n"
+   let board = zip n input
             where n = iterate (+1) 0
    let sol = []
-   let stack = zip n steen
-             where n     = iterate (+1) 1
-                   steen = [(p1,p2) | p1 <- [0..6], p2 <- [0..p1]]
-   nextStep bord sol stack
-   putStrLn ""
-   putStrLn "That's it!"
+   let stack = zip n stones
+             where n      = iterate (+1) 1
+                   stones = [(p1,p2) | p1 <- [0..6], p2 <- [0..p1]]
+   nextStep board sol stack
+   putStrLn "\nThat's it!"
    printSolutionsTo [] 
   
 
@@ -28,7 +26,7 @@ printSolutionsTo a = do
 --Hier gebeurt de magie!
 --
 nextStep :: [(Int,Int)] -> [(Int,Int)] -> [(Int,(Int,Int))] -> IO ()
-nextStep [] tempSo _ = printBord (getListFromBoard tempSo)
+nextStep [] tempSo _ = printBoard (getListFromBoard tempSo)
 nextStep remBord tempSo remSt = do
    goRight remBord tempSo [] remSt
    goDown remBord tempSo [] remSt
@@ -36,19 +34,16 @@ nextStep remBord tempSo remSt = do
 
 goRight :: [(Int,Int)] -> [(Int,Int)] -> [(Int,(Int,Int))] -> [(Int,(Int,Int))] -> IO ()
 goRight _ _ _ [] = return ()
-goRight ((c1,v1):(c2,v2):bord) sol tried ((ns,(p1,p2)):stack) | (0 == mod (c1 + 1) 8) || ((c1 + 1) /= c2)      = return ()
-                                                              | not (((p1,p2)==(v1,v2)) || ((p2,p1)==(v1,v2))) = goRight ((c1,v1):(c2,v2):bord) sol ((ns,(p1,p2)):tried) stack
-                                                              | otherwise                                      = do
-    nextStep bord ((c1,ns):(c2,ns):sol) (stack ++ tried)
-    goRight ((c1,v1):(c2,v2):bord) sol ((ns,(p1,p2)):tried) stack
+goRight ((c1,v1):(c2,v2):board) sol tried ((ns,(p1,p2)):stack) | (0 == mod (c1 + 1) 8) || ((c1 + 1) /= c2)      = return ()
+                                                               | not (((p1,p2)==(v1,v2)) || ((p2,p1)==(v1,v2))) = goRight ((c1,v1):(c2,v2):board) sol ((ns,(p1,p2)):tried) stack
+                                                               | otherwise                                      = nextStep board ((c1,ns):(c2,ns):sol) (stack ++ tried)
 
 goDown :: [(Int,Int)] -> [(Int,Int)] -> [(Int,(Int,Int))] -> [(Int,(Int,Int))] -> IO ()
 goDown _ _ _ [] = return ()
-goDown ((a,b):bord) sol tried ((ns,(p1,p2)):stack) | (a > 47) || ((8 + a) /= getNum (getDown (a,b) bord))                                               = return ()
-                                                   | not (((p1,p2)==(b,(getVal (getDown (a,b) bord)))) || ((p2,p1)==(b,(getVal (getDown (a,b) bord))))) = goDown ((a,b):bord) sol ((ns,(p1,p2)):tried) stack
-                                                   | otherwise                                                                                          = do
-   nextStep (removeField (a+8,b) bord) ((a,ns):(a+8,ns):sol) (stack ++ tried)
-   goDown ((a,b):bord) sol ((ns,(p1,p2)):tried) stack
+goDown ((a,b):board) sol tried ((ns,(p1,p2)):stack) | (a > 47)                                                                                             = return ()
+                                                    | not (((p1,p2)==(b,(getVal (getDown (a,b) board)))) || ((p2,p1)==(b,(getVal (getDown (a,b) board))))) = goDown ((a,b):board) sol ((ns,(p1,p2)):tried) stack
+                                                    | otherwise                                                                                            = nextStep (removeField (a+8,b) board) ((a,ns):(a+8,ns):sol) (stack ++ tried)
+
 
 
 --
@@ -58,10 +53,7 @@ getDown :: (Int,Int) -> [(Int,Int)] -> (Int,Int)
 getDown (a,b) bord  = head [(c,v) | (c,v) <- bord, (a+8)==c]
 
 removeField :: (Int,Int) -> [(Int,Int)] -> [(Int,Int)]
-removeField (a,_) bord = [(c,v) | (c,v) <- bord, c/=a]
-
-getNum :: (Int,Int) -> Int
-getNum (a,_) = a
+removeField (a,_) board = [(c,v) | (c,v) <- board, c/=a]
 
 getVal :: (Int,Int) -> Int
 getVal (_,v) = v
@@ -69,21 +61,22 @@ getVal (_,v) = v
 --
 --De methodes om de borden te printen
 --
-printBord :: [Int] -> IO ()
-printBord [] = return ()
-printBord os = do 
+printBoard :: [Int] -> IO ()
+printBoard [] = return ()
+printBoard os = do 
    putStrLn "Possible Solution:"
-   putStrLn "------------------"
+   putStrLn "┌---------------------------┐"
    printLines os
-   putStrLn "------------------"
+   putStrLn "└---------------------------┘\n"
    putStrLn ""
-   printBord []
+   printBoard []
 
 printLines :: [Int] -> IO ()
 printLines [] = return ()
 printLines os = do
+   putStr "╎  "
    printLine (take 8 os)
-   putStrLn " "
+   putStrLn " ╎"
    printLines (drop 8 os)
 
 printLine :: [Int] -> IO ()
