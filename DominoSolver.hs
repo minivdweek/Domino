@@ -30,25 +30,27 @@ nextStep [] tempSo _ = printBoard (getListFromBoard tempSo)
 nextStep remBord tempSo remSt = do
    goRight remBord tempSo [] remSt
    goDown remBord tempSo [] remSt
-   return ()
 
 goRight :: [(Int,Int)] -> [(Int,Int)] -> [(Int,(Int,Int))] -> [(Int,(Int,Int))] -> IO ()
 goRight _ _ _ [] = return ()
-goRight ((c1,v1):(c2,v2):board) sol tried ((ns,(p1,p2)):stack) | (0 == mod (c1 + 1) 8) || ((c1 + 1) /= c2)      = return ()
-                                                               | not (((p1,p2)==(v1,v2)) || ((p2,p1)==(v1,v2))) = goRight ((c1,v1):(c2,v2):board) sol ((ns,(p1,p2)):tried) stack
-                                                               | otherwise                                      = nextStep board ((c1,ns):(c2,ns):sol) (stack ++ tried)
+goRight ((c1,v1):(c2,v2):board) sol tried ((ns,(p1,p2)):stack) | (0 == mod (c1 + 1) 8) || ((c1 + 1) /= c2)  = return ()
+                                                               | fits (v1,v2) (p1,p2)                       = nextStep board ((c1,ns):(c2,ns):sol) (stack ++ tried)
+                                                               | otherwise                                  = goRight ((c1,v1):(c2,v2):board) sol ((ns,(p1,p2)):tried) stack
 
 goDown :: [(Int,Int)] -> [(Int,Int)] -> [(Int,(Int,Int))] -> [(Int,(Int,Int))] -> IO ()
 goDown _ _ _ [] = return ()
-goDown ((a,b):board) sol tried ((ns,(p1,p2)):stack) | (a > 47)                                                                                             = return ()
-                                                    | not (((p1,p2)==(b,(getVal (getDown (a,b) board)))) || ((p2,p1)==(b,(getVal (getDown (a,b) board))))) = goDown ((a,b):board) sol ((ns,(p1,p2)):tried) stack
-                                                    | otherwise                                                                                            = nextStep (removeField (a+8,b) board) ((a,ns):(a+8,ns):sol) (stack ++ tried)
+goDown ((a,b):board) sol tried ((ns,(p1,p2)):stack) | (a > 47)                                        = return ()
+                                                    | fits (p1,p2) (b,(getVal (getDown (a,b) board))) = nextStep (removeField (a+8,b) board) ((a,ns):(a+8,ns):sol) (stack ++ tried)
+                                                    | otherwise                                       = goDown ((a,b):board) sol ((ns,(p1,p2)):tried) stack
 
 
 
 --
 --een paar hulpfuncties, wss kan het ook zonder
 --
+fits :: (Int,Int) -> (Int,Int) -> Bool
+fits (v1,v2) (p1,p2) = ((v1,v2)==(p1,p2))||((v2,v1)==(p1,p2))
+
 getDown :: (Int,Int) -> [(Int,Int)] -> (Int,Int)
 getDown (a,b) bord  = head [(c,v) | (c,v) <- bord, (a+8)==c]
 
