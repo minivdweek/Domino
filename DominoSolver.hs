@@ -16,7 +16,7 @@ printSolutionsTo a = do
    let sol = []
    let stack = zip n stones
              where n      = iterate (+1) 1
-                   stones = [(p1,p2) | p1 <- [0..6], p2 <- [0..p1]]
+                   stones = [(p1,p2) | p1 <- [0..6], p2 <- [p1..6]]
    nextStep board sol stack
    putStrLn "\nThat's it!"
    printSolutionsTo [] 
